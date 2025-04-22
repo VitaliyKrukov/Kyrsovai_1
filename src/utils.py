@@ -1,8 +1,26 @@
+import json
 import os
 from datetime import datetime
 
 import pandas as pd
-from mypy.build import compute_hash
+import logging
+
+import requests
+from dotenv import load_dotenv
+
+
+logger = logging.getLogger("utils")
+file_handler = logging.FileHandler(
+    os.path.join(os.path.dirname(__file__), "..\\logs\\", "utils.log"),
+    mode="w",
+    encoding="utf-8",
+)
+file_formatter = logging.Formatter(
+    "%(asctime)s %(module)s.%(funcName)s %(levelname)s: %(message)s"
+)
+file_handler.setFormatter(file_formatter)
+logger.addHandler(file_handler)
+logger.setLevel(logging.DEBUG)
 
 
 def processing_function_excel(file_path: str) -> list[dict]:
@@ -38,7 +56,7 @@ data = {'Дата операции': '31.12.2021 16:44:00',
         'Сумма операции с округлением': 160.89}
 
 
-def get_month_date_range(input_date):
+def get_month_date_range(input_date:str)->tuple:
     """Возвращает диапазон дат с 1-го дня месяца входной даты по саму дату."""
 
     if isinstance(input_date, str):
@@ -56,7 +74,7 @@ one_date, two_date = get_month_date_range(input_data)
 print(f"период дат: {one_date}, {two_date}")
 
 
-def get_time_based_greeting():
+def get_time_based_greeting()->str:
     """Возвращает приветствие в зависимости от текущего времени"""
     present_date = datetime.now().hour
 
@@ -72,31 +90,102 @@ def get_time_based_greeting():
 print(get_time_based_greeting())
 
 
-def return_amount(transaction):
+def map_filter(transactions:list[dict]) -> list[dict]:
+    """Функция котрая отоброжает последние 4 цифры карты,
+    общую сумму расходов и кешбэк"""
+    lis_transactions = []
+    result = {}
+    for transaction in transactions:
+        num_card = transaction.get("Номер карты")
+        amount_operation = transaction.get("Сумма операции")
+        if (num_card and amount_operation) and amount_operation < 0:
+            amount_operation = abs(amount_operation)
+            if num_card in result:
+                result[num_card][0] += amount_operation
+                result[num_card][1] += amount_operation // 100
+            else:
+                result[num_card] = [amount_operation, amount_operation // 100]
+    for key, value in result.items():
+
+        dict_temper = {
+            "last_digits": key[-4:],
+            "total_spent": round(value[0], 2),
+            "cashback": int(value[1]),
+        }
+        lis_transactions.append(dict_temper)
+
+    return lis_transactions
+
+
+print(map_filter(processing_function_excel("..\\data\\operations.xlsx")))
+
+
+def top_5_transactions(
+    transactions: list[dict], direction: bool = True
+) -> list[dict]:
+    """Функция возвращает новый список, отсортированный по Сумме платежей"""
+    sorted_list = sorted(
+        transactions, key=lambda x: str(x.get("Сумма платежа", "")))
+    result = sorted_list[0:5]
+    lis_transactions = []
+    for res_transaction in result:
+        dct_transaction = {"date": res_transaction["Дата операции"][0:10],
+        "amount": res_transaction["Сумма платежа"],
+        "category": res_transaction["Категория"],
+        "description": res_transaction["Описание"]}
+        lis_transactions.append(dct_transaction)
+    return lis_transactions
+
+print(top_5_transactions(processing_function_excel("..\\data\\operations.xlsx")))
+
+
+def function_accepts_json(file_name: str) -> dict:
+    """Функция обрабатывающая json файл"""
+    try:
+        with open(file_name, "r", encoding="utf-8") as file:
+            try:
+                file_dct = json.load(file)
+                if type(file_dct) is not dict:
+                    logger.critical(f"Проверка {file_dct} на словарь")
+                    return {}
+                logger.info(
+                    f"Вернул обработанный {file_name} в формате python"
+                )
+                return file_dct
+            except json.JSONDecodeError as e:
+                logger.error(f"{e}")
+                return {}
+    except FileNotFoundError as e:
+        logger.error(f"{e}")
+        return {}
+
+
+def exchange_rate(user_data: dict, requests=None)->list[dict]:
     """Функция отображающая курс валют"""
-    curancy = transaction["operationAmount"]["currency"]["code"]
-    amount = transaction["operationAmount"]["amount"]
-    if curancy == "RUB":
-        return float(amount)
-    else:
-        load_dotenv()
-        api_key = os.getenv("API_KEY")
-        url = (
-            f"https://api.apilayer.com/exchangerates_data/convert"
-            f"?to=RUB&from={curancy}&amount={amount}"
-        )
-        headers = {"apikey": api_key}
-        try:
-            respons = requests.get(url, headers=headers)
-        except requests.exceptions.RequestException:
-            print("ошибка http запроса")
-            return 0.0
-        else:
-            if respons.status_code != 200:
-                print("ошибка кода")
-                return 0.0
-            info = respons.json()
-            return float(info["result"])
+    curancy = user_data["user_currencies"]
+
+    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={curancy}&base=RUB"
+    payload = {}
+    headers= {
+      "apikey": "wlZ7nTggLZ2OKRXkuenEJ96LTXGGTWSG"
+    }
+    # try:
+    response = requests.get(url, headers=headers, data = payload)
+    # except requests.exceptions.RequestException:
+    #     print("ошибка http запроса")
+    #     return 0.0
+    # if response.status_code != 200:
+    #     print("ошибка кода")
+    #     return 0.0
+    # info = response.json()
+    return response
+
+print(exchange_rate(function_accepts_json("..\\user_settings.json")))
+
+
+
+
+
 # import requests
 #
 # response = requests.get("https://api.twelvedata.com/time_series?apikey=5f8c818123fd470584a9c926bcc4f89a&interval=1day&start_date=2025-04-09 21:24:00&end_date=2025-04-19 21:24:00&dp=2&outputsize=12&format=JSON&symbol=AAPL")
@@ -149,32 +238,3 @@ def return_amount(transaction):
 #   "success": true,
 #   "timestamp": 1745174954
 # }
-
-
-
-def map_filter(transactions):
-    lis_transactions = []
-    result = {}
-    for transaction in transactions:
-        num_card = transaction.get("Номер карты")
-        amount_operation = transaction.get("Сумма операции")
-        if (num_card and amount_operation) and amount_operation < 0:
-            amount_operation = abs(amount_operation)
-            if num_card in result:
-                result[num_card][0] += amount_operation
-                result[num_card][1] += amount_operation // 100
-            else:
-                result[num_card] = [amount_operation, amount_operation // 100]
-    for key, value in result.items():
-
-        dict_temper = {
-            "last_digits": key[-4:],
-            "total_spent": round(value[0], 2),
-            "cashback": int(value[1]),
-        }
-        lis_transactions.append(dict_temper)
-
-    return lis_transactions
-
-
-print(map_filter(processing_function_excel("..\\data\\operations.xlsx")))
