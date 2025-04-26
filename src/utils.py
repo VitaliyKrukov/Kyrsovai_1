@@ -35,7 +35,7 @@ def processing_function_excel(file_path: str) -> list[dict]:
         logger.error(f"{e}")
         return []
     transact = reader.to_dict("records")
-    logger.info(f"выводим обработанный {transact} файл")
+    logger.info(f"выводим обработанный файл")
     return transact
 
 
@@ -46,7 +46,7 @@ def get_month_date_range(lst_transaction:list[dict], input_date: str):
     """Возвращает диапазон дат с 1-го дня месяца входной даты по саму дату."""
 
     if isinstance(input_date, str):
-        input_date = datetime.strptime(input_date, "%d.%m.%Y")
+        input_date = datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S")
     first_day_of_month = input_date.replace(day=1)
     month_date_range = []
     for transaction in lst_transaction:
@@ -55,6 +55,7 @@ def get_month_date_range(lst_transaction:list[dict], input_date: str):
         date_transaction = datetime.strptime(str(transaction["Дата платежа"]), "%d.%m.%Y")
         if first_day_of_month <= date_transaction <= input_date:
             month_date_range.append(transaction)
+    logger.info(f"выводим обработанные данные")
     return month_date_range
 
 
@@ -104,7 +105,7 @@ def map_filter(transactions: list[dict]) -> list[dict]:
             "cashback": int(value[1]),
         }
         lis_transactions.append(dict_temper)
-    logger.info(f"Выводим обработанные данные{lis_transactions}")
+    logger.info(f"Выводим обработанные данные")
     return lis_transactions
 
 
@@ -124,7 +125,7 @@ def top_5_transactions(
                            "category": res_transaction["Категория"],
                            "description": res_transaction["Описание"]}
         lis_transactions.append(dct_transaction)
-    logger.info(f"Выводи отсортированные данные по сумме платежей{lis_transactions}")
+    logger.info(f"Выводи отсортированные данные по сумме платежей")
     return lis_transactions
 
 
@@ -154,24 +155,20 @@ def function_accepts_json(file_name: str) -> dict:
 
 def exchange_rate(user_data: dict) -> list[dict]:
     """Функция отображающая курс валют"""
-    curancy = user_data["user_currencies"][0]
-    curancy_2 = user_data["user_currencies"][1]
     load_dotenv()
     api_key = os.getenv("API_KEY")
-    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={curancy}%2C{curancy_2}&base=RUB"
+    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={",".join(user_data["user_currencies"])}&base=RUB"
     payload = {}
     headers = {
         "apikey": api_key
     }
     try:
-        response = requests.request("GET", url, headers=headers, data=payload)
+        response = requests.get(url, headers=headers, data=payload)
     except requests.exceptions.RequestException as e:
         logger.error(f"{e}")
-        print("ошибка http запроса")
         return []
     if response.status_code != 200:
-        logger.critical(f"Проверка на статус кода {response.status_code}")
-        print("ошибка кода")
+        logger.critical(f"Ошибка проверки на статус кода {response.status_code}")
         return []
     responses = response.json().get("rates", {})
     list_responses = []
@@ -188,7 +185,7 @@ def exchange_rate(user_data: dict) -> list[dict]:
 
 
 def stock_price(user_data: dict) -> list[dict]:
-    stock = user_data["user_stocks"]
+    stock = user_data.get("user_stocks")
     load_dotenv()
     api_key = os.getenv("API_KEY_2")
     API_KEY = api_key
@@ -198,11 +195,9 @@ def stock_price(user_data: dict) -> list[dict]:
         response = requests.get(url)
     except requests.exceptions.RequestException as e:
         logger.error(f"{e}")
-        print("ошибка http запроса")
         return []
     if response.status_code != 200:
-        logger.critical(f"Проверка на статус кода {response.status_code}")
-        print("ошибка кода")
+        logger.critical(f"Ошибка проверки на статус кода {response.status_code}")
         return []
     data = response.json()
     lis_stocks = []
@@ -214,4 +209,4 @@ def stock_price(user_data: dict) -> list[dict]:
     logger.info(f"Выводим результат запроса{lis_stocks}")
     return lis_stocks
 
-# print(stock_price(function_accepts_json("..\\user_settings.json")))
+#print(stock_price(function_accepts_json("..\\user_settings.json")))
