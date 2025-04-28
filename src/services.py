@@ -1,8 +1,8 @@
+from src.services_utils import search_by_phone_number, search_transactions
 from src.utils import processing_function_excel
-from src.services_utils import search_transactions, search_by_phone_number
 
 
-def get_services()-> None:
+def get_services() -> None:
     """Общая функция для получения сервисов"""
     print("Выберите номер сервисной функции")
     print("1 - Простой поиск")
@@ -24,11 +24,3 @@ def get_services()-> None:
         print(search_transactions(processing_function_excel("..\\data\\operations.xlsx"), user_word))
     elif user_input == "2":
         print(search_by_phone_number(processing_function_excel("..\\data\\operations.xlsx")))
-
-
-
-    
-
-
-
-

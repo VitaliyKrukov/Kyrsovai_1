@@ -2,11 +2,11 @@ import json
 import logging
 import os
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-
 
 logger = logging.getLogger("utils")
 file_handler = logging.FileHandler(
@@ -14,9 +14,7 @@ file_handler = logging.FileHandler(
     mode="w",
     encoding="utf-8",
 )
-file_formatter = logging.Formatter(
-    "%(asctime)s %(module)s.%(funcName)s %(levelname)s: %(message)s"
-)
+file_formatter = logging.Formatter("%(asctime)s %(module)s.%(funcName)s %(levelname)s: %(message)s")
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
 logger.setLevel(logging.DEBUG)
@@ -35,15 +33,15 @@ def processing_function_excel(file_path: str) -> list[dict]:
         logger.error(f"{e}")
         return []
     transact = reader.to_dict("records")
-    logger.info(f"выводим обработанный файл")
+    logger.info("выводим обработанный файл")
     return transact
 
 
-def get_month_date_range(lst_transaction:list[dict], input_date: str):
+def get_month_date_range(lst_transaction: list[dict], input_date_str: str) -> list[Any]:
     """Возвращает диапазон дат с 1-го дня месяца входной даты по саму дату."""
 
-    if isinstance(input_date, str):
-        input_date = datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S")
+    if isinstance(input_date_str, str):
+        input_date = datetime.strptime(input_date_str, "%Y-%m-%d %H:%M:%S")
     first_day_of_month = input_date.replace(day=1)
     month_date_range = []
     for transaction in lst_transaction:
@@ -52,7 +50,7 @@ def get_month_date_range(lst_transaction:list[dict], input_date: str):
         date_transaction = datetime.strptime(str(transaction["Дата платежа"]), "%d.%m.%Y")
         if first_day_of_month <= date_transaction <= input_date:
             month_date_range.append(transaction)
-    logger.info(f"выводим обработанные данные")
+    logger.info("выводим обработанные данные")
     return month_date_range
 
 
@@ -61,16 +59,16 @@ def get_time_based_greeting() -> str:
     present_date = datetime.now().hour
 
     if 5 <= present_date < 12:
-        logger.info(f"Выводим доброе утро")
+        logger.info("Выводим доброе утро")
         return "Доброе утро"
     elif 12 <= present_date < 17:
-        logger.info(f"Выводим добрый день")
+        logger.info("Выводим добрый день")
         return "Добрый день"
     elif 17 <= present_date < 22:
-        logger.info(f"Выводим добрый вечер")
+        logger.info("Выводим добрый вечер")
         return "Добрый вечер"
     else:
-        logger.info(f"Выводим доброй ночи")
+        logger.info("Выводим доброй ночи")
         return "Доброй ночи"
 
 
@@ -78,7 +76,7 @@ def map_filter(transactions: list[dict]) -> list[dict]:
     """Функция, которая отображает последние 4 цифры карты,
     общую сумму расходов и кешбэк"""
     lis_transactions = []
-    result = {}
+    result: dict[str, list] = {}
     for transaction in transactions:
         num_card = transaction.get("Номер карты")
         amount_operation = transaction.get("Сумма операции")
@@ -96,24 +94,24 @@ def map_filter(transactions: list[dict]) -> list[dict]:
             "cashback": int(value[1]),
         }
         lis_transactions.append(dict_temper)
-    logger.info(f"Выводим обработанные данные")
+    logger.info("Выводим обработанные данные")
     return lis_transactions
 
 
-def top_5_transactions(
-        transactions: list[dict]) -> list[dict]:
+def top_5_transactions(transactions: list[dict]) -> list[dict]:
     """Функция возвращает новый список, отсортированный по Сумме платежей"""
-    sorted_list = sorted(
-        transactions, key=lambda x: x.get("Сумма платежа", ""))
+    sorted_list = sorted(transactions, key=lambda x: x.get("Сумма платежа", ""))
     result = sorted_list[0:5]
     lis_transactions = []
     for res_transaction in result:
-        dct_transaction = {"date": res_transaction["Дата операции"][0:10],
-                           "amount": abs(res_transaction["Сумма платежа"]),
-                           "category": res_transaction["Категория"],
-                           "description": res_transaction["Описание"]}
+        dct_transaction = {
+            "date": res_transaction["Дата операции"][0:10],
+            "amount": abs(res_transaction["Сумма платежа"]),
+            "category": res_transaction["Категория"],
+            "description": res_transaction["Описание"],
+        }
         lis_transactions.append(dct_transaction)
-    logger.info(f"Выводи отсортированные данные по сумме платежей")
+    logger.info("Выводи отсортированные данные по сумме платежей")
     return lis_transactions
 
 
@@ -126,9 +124,7 @@ def function_accepts_json(file_name: str) -> dict:
                 if type(file_dct) is not dict:
                     logger.critical(f"Проверка {file_dct} на словарь")
                     return {}
-                logger.info(
-                    f"Вернул обработанный {file_name} в формате python"
-                )
+                logger.info(f"Вернул обработанный {file_name} в формате python")
                 return file_dct
             except json.JSONDecodeError as e:
                 logger.error(f"{e}")
@@ -142,13 +138,12 @@ def exchange_rate(user_data: dict) -> list[dict]:
     """Функция отображающая курс валют"""
     load_dotenv()
     api_key = os.getenv("API_KEY")
-    url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={",".join(user_data["user_currencies"])}&base=RUB"
-    payload = {}
-    headers = {
-        "apikey": api_key
-    }
+    url = (
+        f"https://api.apilayer.com/exchangerates_data/latest?symbols={",".join(user_data["user_currencies"])}&base=RUB"
+    )
+    headers = {"apikey": api_key}
     try:
-        response = requests.get(url, headers=headers, data=payload)
+        response = requests.get(url, headers=headers)
     except requests.exceptions.RequestException as e:
         logger.error(f"{e}")
         return []
@@ -160,20 +155,19 @@ def exchange_rate(user_data: dict) -> list[dict]:
     for key, value in responses.items():
         dct_responses = {}
         dct_responses["currency"] = key
-        dct_responses["rate"] = round(1 / float(value),2)
+        dct_responses["rate"] = round(1 / float(value), 2)
         list_responses.append(dct_responses)
     logger.info(f"Выводим результат запроса{list_responses}")
     return list_responses
 
 
-def stock_price(user_data: dict) -> list[dict]:
+def stock_price(user_data: dict[str, list]) -> list[dict]:
     """Функция отображающая курс акций"""
-    stock = user_data.get("user_stocks")
+    stock = user_data.get("user_stocks", [])
     load_dotenv()
     api_key = os.getenv("API_KEY_2")
     API_KEY = api_key
-    symbols = stock
-    url = f"https://api.twelvedata.com/price?symbol={','.join(symbols)}&apikey={API_KEY}"
+    url = f"https://api.twelvedata.com/price?symbol={','.join(stock)}&apikey={API_KEY}"
     try:
         response = requests.get(url)
     except requests.exceptions.RequestException as e:
