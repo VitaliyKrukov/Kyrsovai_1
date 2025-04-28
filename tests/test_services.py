@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 from src.services import get_services
+from src.services_utils import search_transactions, search_by_phone_number
 
 
 def test_get_services_1(list_search, capsys):
@@ -22,5 +23,12 @@ def test_get_services_2(list_search, capsys):
         params = capsys.readouterr().out
         assert "\"Описание\": \"МТС +7 981 976-14-20\"" in params
 
+
+def test_search_transactions():
+    assert search_transactions([], "") == []
+
+
+def test_search_by_phone_number():
+    assert search_by_phone_number([]) == []
 
 

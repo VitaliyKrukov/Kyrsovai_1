@@ -5,6 +5,7 @@ from src.utils import processing_function_excel, get_time_based_greeting, map_fi
 
 
 def get_views(date: str) -> str:
+    """Функция, создающая словарь в требуемом формате"""
     read_excel = processing_function_excel("..\\data\\operations.xlsx")
     read_json = function_accepts_json('..\\user_settings.json')
     greeting = get_time_based_greeting()

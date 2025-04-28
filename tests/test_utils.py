@@ -30,6 +30,11 @@ def test_get_month_date_range(excel_list_dict):
     assert get_month_date_range(excel_list_dict, input_data) == excel_list_dict
 
 
+def test_get_month_date_range_list(excel_list_dict_empty):
+    input_data = "2021-12-31 23:59:59"
+    assert get_month_date_range(excel_list_dict_empty, input_data) == []
+
+
 def test_get_month_date_range_nothing():
     input_data = "2021-12-31 23:59:59"
     assert get_month_date_range([], input_data) == []

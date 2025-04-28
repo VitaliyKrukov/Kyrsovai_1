@@ -59,7 +59,7 @@ def get_month_date_range(lst_transaction:list[dict], input_date: str):
     return month_date_range
 
 
-# print(get_month_date_range( processing_function_excel("..\\data\\operations.xlsx"), "22.10.2021"))
+#print(get_month_date_range( processing_function_excel("..\\data\\operations.xlsx"), "2021-03-13 00:00:00"))
 
 
 def get_time_based_greeting() -> str:
@@ -185,6 +185,7 @@ def exchange_rate(user_data: dict) -> list[dict]:
 
 
 def stock_price(user_data: dict) -> list[dict]:
+    """Функция отображающая курс акций"""
     stock = user_data.get("user_stocks")
     load_dotenv()
     api_key = os.getenv("API_KEY_2")
