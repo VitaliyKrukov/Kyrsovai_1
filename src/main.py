@@ -1,3 +1,5 @@
+import re
+
 import pandas as pd
 
 from src.reports import spending_by_category
@@ -5,7 +7,8 @@ from src.services import get_services
 from src.views import get_views
 
 
-def main():
+def main()->None:
+    """Общая функция объеденяющая функции"""
     print("Выберите номер функции котора вам необходима")
     print("1 - Главная")
     print("2 - Поиск по ключевому слову описания или по номерам телефонов")
@@ -20,7 +23,7 @@ def main():
         print("Введите дату по которой будет найдена информация на примере 2021-12-12 00:00:00")
         while True:
             user_date = input().strip()
-            if user_date:
+            if user_date and re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', user_date):
                 break
             else:
                 print("Слово не должно быть пустым")
@@ -38,10 +41,11 @@ def main():
         print("Введите дату по которой будет обработан отчет на примере 2021-12-12 00:00:00")
         while True:
             user_date = input().strip()
-            if user_date:
+            if user_date and re.match(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$', user_date):
                 break
             else:
                 print("Слово не должно быть пустым")
         print(spending_by_category(pd.read_excel("..\\data\\operations.xlsx"), user_category, user_date))
 
-main()
+if __name__ == "__main__":
+    main()

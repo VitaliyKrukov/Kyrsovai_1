@@ -2,7 +2,8 @@ from src.utils import processing_function_excel
 from src.services_utils import search_transactions, search_by_phone_number
 
 
-def get_services():
+def get_services()-> None:
+    """Общая функция для получения сервисов"""
     print("Выберите номер сервисной функции")
     print("1 - Простой поиск")
     print("2 - Поиск по номеру телефона")

@@ -39,9 +39,6 @@ def processing_function_excel(file_path: str) -> list[dict]:
     return transact
 
 
-# print(processing_function_excel("..\\data\\operations.xlsx")[0:5])
-
-
 def get_month_date_range(lst_transaction:list[dict], input_date: str):
     """Возвращает диапазон дат с 1-го дня месяца входной даты по саму дату."""
 
@@ -57,9 +54,6 @@ def get_month_date_range(lst_transaction:list[dict], input_date: str):
             month_date_range.append(transaction)
     logger.info(f"выводим обработанные данные")
     return month_date_range
-
-
-#print(get_month_date_range( processing_function_excel("..\\data\\operations.xlsx"), "2021-03-13 00:00:00"))
 
 
 def get_time_based_greeting() -> str:
@@ -78,9 +72,6 @@ def get_time_based_greeting() -> str:
     else:
         logger.info(f"Выводим доброй ночи")
         return "Доброй ночи"
-
-
-# print(get_time_based_greeting())
 
 
 def map_filter(transactions: list[dict]) -> list[dict]:
@@ -109,9 +100,6 @@ def map_filter(transactions: list[dict]) -> list[dict]:
     return lis_transactions
 
 
-# print(map_filter())
-
-
 def top_5_transactions(
         transactions: list[dict]) -> list[dict]:
     """Функция возвращает новый список, отсортированный по Сумме платежей"""
@@ -127,9 +115,6 @@ def top_5_transactions(
         lis_transactions.append(dct_transaction)
     logger.info(f"Выводи отсортированные данные по сумме платежей")
     return lis_transactions
-
-
-# print(top_5_transactions())
 
 
 def function_accepts_json(file_name: str) -> dict:
@@ -181,9 +166,6 @@ def exchange_rate(user_data: dict) -> list[dict]:
     return list_responses
 
 
-#print(exchange_rate(function_accepts_json("..\\user_settings.json")))
-
-
 def stock_price(user_data: dict) -> list[dict]:
     """Функция отображающая курс акций"""
     stock = user_data.get("user_stocks")
@@ -209,5 +191,3 @@ def stock_price(user_data: dict) -> list[dict]:
         lis_stocks.append(dct_stock)
     logger.info(f"Выводим результат запроса{lis_stocks}")
     return lis_stocks
-
-#print(stock_price(function_accepts_json("..\\user_settings.json")))
